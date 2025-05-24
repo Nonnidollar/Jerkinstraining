@@ -9,13 +9,13 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  SONAR_PROJECT_KEY: nodejs-app-sonar
+  SONAR_HOST_URL: http://54.205.242.208:9000
+  
 jobs:
   build-test-deploy: 
-
-    runs-on: ${{matrix.os}}
-    strategy:
-        matrix:
-         os: [ubuntu-latest,windows-latest,macos-latest]
+    runs-on: ubuntu-latest 
 
     steps:
     - uses: actions/checkout@v4
@@ -25,5 +25,18 @@ jobs:
         node-version: '23'
         cache: 'npm'
     - run: npm ci
-    - run: npm run build --if-present
+    - run: npm run build --if-present 
   
+    - name: install dependecies 
+      run: npm install
+
+    - name: sonarqube scan
+      env:
+        SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+      run: |
+        npm install -g sonar-scanner
+        sonar-scanner \
+          -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }} \
+          -Dsonar.sources=. \
+          -Dsonar.host.url=${{ env.SONAR_HOST_URL }} \
+          -Dsonar.login=${{ env.SONAR_TOKEN }}
